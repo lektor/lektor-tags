@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import posixpath
 
+from jinja2 import Undefined
 from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
@@ -84,7 +85,7 @@ class TagsPlugin(Plugin):
             items_exp = Expression(env, self.get_items_expression())
             url_exp = FormatExpression(env, self.get_url_path_expression())
 
-            for tag in ['tag1', 'tag2', 'tag3']: # todo:
+            for tag in self.get_all_tags(parent):
                 values = {'parent': parent, 'tag': tag}
 
                 # TODO: "this"?
@@ -109,19 +110,20 @@ class TagsPlugin(Plugin):
         # TODO: test
         return self.get_config().get('template', 'tag.html')
 
-    # def get_all_tags(self, blog):
-    #     tag_field = self.get_tag_field_name()
-    #     model_id = self.get_tag_model()
-    #     tags = set()
-    #     for item in blog.children:
-    #         if item.datamodel.id != model_id:
-    #             continue
-    #         if tag_field not in item:
-    #             continue
-    #         item_tags = item[tag_field]
-    #         if isinstance(item_tags, (list, tuple)):
-    #             tags |= set(item_tags)
-    #         elif not isinstance(item_tags, Undefined):
-    #             tags.add(item_tags)
-    #
-    #     return sorted(tags)
+    def get_tag_field_name(self):
+        return self.get_config().get('tags_field', 'tags')
+
+    def get_all_tags(self, parent):
+        tag_field = self.get_tag_field_name()
+        tags = set()
+        for item in parent.children:
+            if tag_field not in item:
+                # TODO: warn if "verbose" mode.
+                continue
+            item_tags = item[tag_field]
+            if isinstance(item_tags, (list, tuple)):
+                tags |= set(item_tags)
+            elif not isinstance(item_tags, Undefined):
+                tags.add(item_tags)
+
+        return sorted(tags)
