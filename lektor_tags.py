@@ -12,11 +12,10 @@ DEFAULT_ITEMS_QUERY = 'parent.children.filter(F.tags.contains(tag))'
 
 
 class TagPage(VirtualSourceObject):
-    # TODO: track dependencies
     def __init__(self, parent, tag, items):
         VirtualSourceObject.__init__(self, parent)
         self.plugin = parent.pad.env.plugins['tags']
-        self.items = list(items)
+        self.items = items
         self.tag = tag
         self.__url_path = None
 
