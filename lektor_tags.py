@@ -12,7 +12,6 @@ DEFAULT_ITEMS_QUERY = 'parent.children.filter(F.tags.contains(tag))'
 
 
 class TagPage(VirtualSourceObject):
-    # TODO: shouldn't need parent passed in?
     # TODO: track dependencies
     def __init__(self, parent, tag, items):
         VirtualSourceObject.__init__(self, parent)
@@ -87,8 +86,6 @@ class TagsPlugin(Plugin):
 
             for tag in self.get_all_tags(parent):
                 values = {'parent': parent, 'tag': tag}
-
-                # TODO: "this"?
                 values['items'] = items = items_exp.evaluate(pad, values=values)
                 page = TagPage(parent, tag, items)
                 url_path = url_exp.evaluate(pad, this=page, values=values)
