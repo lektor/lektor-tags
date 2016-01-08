@@ -14,5 +14,7 @@ setup(
         'lektor.plugins': [
             'tags = lektor_tags:TagsPlugin',
         ]
-    }
+    },
+    data_files=[('templates', ['templates/tag.html'])],
+    include_package_data=True,
 )

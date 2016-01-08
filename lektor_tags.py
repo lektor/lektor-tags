@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pkg_resources
 import posixpath
 
 from jinja2 import Undefined
@@ -6,7 +7,7 @@ from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
-
+from werkzeug.utils import cached_property
 
 DEFAULT_ITEMS_QUERY = 'parent.children.filter(F.tags.contains(tag))'
 
@@ -36,7 +37,7 @@ class TagPage(VirtualSourceObject):
 
     @property
     def template_name(self):
-        return self.plugin.get_template_name()
+        return self.plugin.get_template()
 
 
 class TagPageBuildProgram(BuildProgram):
@@ -102,9 +103,18 @@ class TagsPlugin(Plugin):
     def get_url_path_expression(self):
         return self.get_config().get('url_path')
 
-    def get_template_name(self):
-        # TODO: test
-        return self.get_config().get('template', 'tag.html')
+    def get_template(self):
+        filename = self.get_config().get('template')
+        if filename:
+            return filename
+
+        return self._default_template
+
+    @cached_property
+    def _default_template(self):
+        stream = pkg_resources.resource_stream('lektor_tags',
+                                               'templates/tag.html')
+        return self.env.jinja_env.from_string(stream.read())
 
     def get_tag_field_name(self):
         return self.get_config().get('tags_field', 'tags')
