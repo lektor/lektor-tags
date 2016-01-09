@@ -59,6 +59,10 @@ class TagsPlugin(Plugin):
 
     def on_setup_env(self, **extra):
         self.env.add_build_program(TagPage, TagPageBuildProgram)
+        parent_path = self.get_parent_path()
+        if not parent_path:
+            raise RuntimeError('Set the "parent" option in %s'
+                               % self.config_filename)
 
         @self.env.urlresolver
         def tag_resolver(node, url_path):
@@ -68,26 +72,17 @@ class TagsPlugin(Plugin):
 
         @self.env.generator
         def generate_tag_pages(source):
-            if TagsPlugin.generated:
+            if source.path != parent_path:
                 return
 
-            TagsPlugin.generated = True
             pad = source.pad
-            env = pad.env
-            parent_exp = Expression(env, self.get_parent_expression())
-            if not parent_exp:
-                raise RuntimeError('Set the "parent" option in %s'
-                                   % self.config_filename)
+            items_exp = Expression(self.env, self.get_items_expression())
+            url_exp = FormatExpression(self.env, self.get_url_path_expression())
 
-            parent = parent_exp.evaluate(pad)
-
-            items_exp = Expression(env, self.get_items_expression())
-            url_exp = FormatExpression(env, self.get_url_path_expression())
-
-            for tag in self.get_all_tags(parent):
-                values = {'parent': parent, 'tag': tag}
+            for tag in self.get_all_tags(source):
+                values = {'parent': source, 'tag': tag}
                 values['items'] = items = items_exp.evaluate(pad, values=values)
-                page = TagPage(parent, tag, items)
+                page = TagPage(source, tag, items)
                 url_path = url_exp.evaluate(pad, this=page, values=values)
                 url_path = url_path.rstrip('/')
                 page.set_url_path(url_path)
@@ -97,7 +92,7 @@ class TagsPlugin(Plugin):
     def get_items_expression(self):
         return self.get_config().get('items', DEFAULT_ITEMS_QUERY)
 
-    def get_parent_expression(self):
+    def get_parent_path(self):
         return self.get_config().get('parent')
 
     def get_url_path_expression(self):
