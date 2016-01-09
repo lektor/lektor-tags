@@ -10,6 +10,7 @@ from lektor.sourceobj import VirtualSourceObject
 from werkzeug.utils import cached_property
 
 DEFAULT_ITEMS_QUERY = 'parent.children.filter(F.tags.contains(tag))'
+DEFAULT_URL_PATH_EXP = '{{ parent.url_path }}tag/{{ tag }}'
 
 
 class TagPage(VirtualSourceObject):
@@ -96,7 +97,7 @@ class TagsPlugin(Plugin):
         return self.get_config().get('parent')
 
     def get_url_path_expression(self):
-        return self.get_config().get('url_path')
+        return self.get_config().get('url_path', DEFAULT_URL_PATH_EXP)
 
     def get_template(self):
         filename = self.get_config().get('template')
