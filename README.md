@@ -1,8 +1,8 @@
 # Lektor Tags Plugin
 
-For each tag on your site, build a list of pages with that tag. This can be used for standard tag-based blog navigation.
+This plugin implements tagging for your site. For each of your tags, it builds a page with a list of pages that have that tag. This can be used for standard tag-based blog navigation.
 
-For example, if you have a blog post at `blog/first-post/contents.lr`:
+For example, if your site has blog posts like this in your `contents/blog` directory:
 
 ```
 name: First Post
@@ -13,7 +13,7 @@ coffee
 tea
 ```
 
-Then create a `configs/tags.ini`, like:
+Create a `configs/tags.ini`, like:
 
 ```
 parent = /blog
@@ -65,6 +65,19 @@ See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db
 
 The name of the field in your model that contains tags. Defaults to `tags`. The field should be of type `strings`. See [the Lektor documentation for the `strings` type](https://www.getlektor.com/docs/api/db/types/strings/).
 
+For example, if your model is like:
+
+```
+[fields.labels]
+type = strings
+```
+
+Then add this to `tags.ini`:
+
+```
+tags_field = labels
+```
+
 ### `template`
 
 The template for the page that lists all posts with a certain tag. The template's `this` variable has attributes `tag` and `items`. An example template:
@@ -79,6 +92,12 @@ The template for the page that lists all posts with a certain tag. The template'
     <li><em>No items.</em></li>
   {% endfor %}
 </ul>
+```
+
+Save a file like this to your project's `templates/tags.html`. If you name the file something different, like `label.html`, add this line to `tags.ini`:
+
+```
+template = label.html
 ```
 
 The plugin provides a default template if you don't specify one.
