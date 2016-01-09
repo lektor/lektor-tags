@@ -115,6 +115,7 @@ class TagsPlugin(Plugin):
         return self.get_config().get('tags_field', 'tags')
 
     def get_all_tags(self, parent):
+        # TODO: configurable tag filter.
         tag_field = self.get_tag_field_name()
         tags = set()
         for item in parent.children:
