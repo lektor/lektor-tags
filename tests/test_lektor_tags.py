@@ -40,3 +40,10 @@ def test_resolver(pad, builder, webui):
     check_tag('tag2')
     check_tag('tag3')
     assert resolve('blog/tag/tag4/')[0] is None
+
+
+def test_virtual_resolver(pad, builder):
+    page = pad.get('blog@tag/tag1')
+    assert page and page.tag == 'tag1'
+    url_path = page.url_to(pad.get('blog/post1'))
+    assert url_path == '../../../blog/post1/'

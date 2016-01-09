@@ -47,16 +47,16 @@ Required. The source path of the tag pages' parent page.
 
 ### `items`
 
-A query for all items on the page for one tag. You can use the variables `site`, `parent`, and `tag`. The default query is:
+A query for all items on the page for one tag. You can use the variables `site` and `tag`. The template's `this` variable has a `parent` attribute. The default query is:
 
 ```
-items = parent.children.filter(F.tags.contains(tag))
+items = this.parent.children.filter(F.tags.contains(tag))
 ```
 
 You can sort and filter with any expression:
 
 ```
-items = parent.children.filter(F.tags.contains(tag) and F.status == 'published').order_by('-pub_date')
+items = this.parent.children.filter(F.tags.contains(tag) and F.status == 'published').order_by('-pub_date')
 ```
 
 See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db/query/).
@@ -85,10 +85,10 @@ The plugin provides a default template if you don't specify one.
 
 ### `url_path`
 
-An expression for the location of each tag page. You can use the variables `parent` and `tag`. The `this` variable is a page with attributes `tag` and `items`. The default expression is:
+An expression for the location of each tag page. You can use the variables `site` and `tag`. The `this` variable is a page with attributes `parent` and `items`. The default expression is:
 
 ```
-url_path = {{ parent.url_path }}tag/{{ tag }}
+url_path = {{ this.parent.url_path }}tag/{{ tag }}
 ```
 
-In the example above, this expression generations URLs like `blog/tag/coffee/`.
+This expression generates URLs like `/blog/tag/coffee`.

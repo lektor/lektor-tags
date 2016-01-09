@@ -7,34 +7,45 @@ from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
+from lektor.utils import build_url
 from werkzeug.utils import cached_property
 
-DEFAULT_ITEMS_QUERY = 'parent.children.filter(F.tags.contains(tag))'
-DEFAULT_URL_PATH_EXP = '{{ parent.url_path }}tag/{{ tag }}'
+DEFAULT_ITEMS_QUERY = 'this.parent.children.filter(F.tags.contains(tag))'
+DEFAULT_URL_PATH_EXP = '{{ this.parent.url_path }}tag/{{ tag }}'
+
+
+def _ensure_slash(s):
+    return s if s.endswith('/') else s + '/'
 
 
 class TagPage(VirtualSourceObject):
-    def __init__(self, parent, tag, items):
+    def __init__(self, plugin, parent, tag):
         VirtualSourceObject.__init__(self, parent)
         self.plugin = parent.pad.env.plugins['tags']
-        self.items = items
         self.tag = tag
-        self.__url_path = None
 
         # TODO: Must strong-ref the pad?
         self.__pad = parent.pad
 
     @property
+    def items(self):
+        items_exp = Expression(self.pad.env, self.plugin.get_items_expression())
+        return items_exp.evaluate(self.pad, this=self, values={'tag': self.tag})
+
+    @property
     def path(self):
-        return posixpath.join(self.parent.path, 'tag', self.tag) + '/'
+        return build_url([self.parent.path, '@tag', self.tag])
 
     @property
     def url_path(self):
-        assert self.__url_path
-        return self.__url_path
+        p = TagsPlugin.reverse_url_map[self.path]
+        assert p
+        return p
 
     def set_url_path(self, url_path):
-        self.__url_path = url_path
+        with_slash = _ensure_slash(url_path)
+        TagsPlugin.url_map[with_slash] = self
+        TagsPlugin.reverse_url_map[self.path] = with_slash
 
     @property
     def template_name(self):
@@ -57,6 +68,7 @@ class TagsPlugin(Plugin):
     description = u'Lektor customization just for emptysqua.re.'
     generated = False
     url_map = {}
+    reverse_url_map = {}
 
     def on_setup_env(self, **extra):
         self.env.add_build_program(TagPage, TagPageBuildProgram)
@@ -67,9 +79,13 @@ class TagsPlugin(Plugin):
 
         @self.env.urlresolver
         def tag_resolver(node, url_path):
-            # url_path is a list of segments.
-            joined_path = posixpath.join(*([node.url_path] + url_path))
-            return TagsPlugin.url_map.get(joined_path)
+            u = build_url([node.url_path] + url_path, trailing_slash=True)
+            return TagsPlugin.url_map.get(u)
+
+        @self.env.virtualpathresolver('tag')
+        def tag_source_path_resolver(node, pieces):
+            if node.path == parent_path and len(pieces) == 1:
+                return TagPage(self, node, pieces[0])
 
         @self.env.generator
         def generate_tag_pages(source):
@@ -77,17 +93,12 @@ class TagsPlugin(Plugin):
                 return
 
             pad = source.pad
-            items_exp = Expression(self.env, self.get_items_expression())
             url_exp = FormatExpression(self.env, self.get_url_path_expression())
 
             for tag in self.get_all_tags(source):
-                values = {'parent': source, 'tag': tag}
-                values['items'] = items = items_exp.evaluate(pad, values=values)
-                page = TagPage(source, tag, items)
-                url_path = url_exp.evaluate(pad, this=page, values=values)
-                url_path = url_path.rstrip('/')
+                page = TagPage(self, source, tag)
+                url_path = url_exp.evaluate(pad, this=page, values={'tag': tag})
                 page.set_url_path(url_path)
-                TagsPlugin.url_map[url_path] = page
                 yield page
 
     def get_items_expression(self):
