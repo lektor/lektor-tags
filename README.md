@@ -1,8 +1,8 @@
 # Lektor Tags Plugin
 
-This plugin implements tagging for your site. For each of your tags, it builds a page with a list of pages that have that tag. This can be used for standard tag-based blog navigation.
+This plugin implements tagging for your site. For each of your tags, it builds a page displaying a list of items that have that tag. This can be used for standard tag-based blog navigation.
 
-For example, if your site has blog posts like this in your `contents/blog` directory:
+For example, if your site has blog posts like this in your `content/blog` directory:
 
 ```
 name: First Post
@@ -17,13 +17,12 @@ Create a `configs/tags.ini`, like:
 
 ```
 parent = /blog
-template = tags.html
 ```
 
-The `lektor-tags` plugin will render pages at these URLs:
+The `lektor-tags` plugin builds pages at these URLs:
 
-* `blog/tag/coffee/`
-* `blog/tag/tea/`
+* `/blog/tag/coffee/`
+* `/blog/tag/tea/`
 
 Each page lists all the posts with that tag.
 
