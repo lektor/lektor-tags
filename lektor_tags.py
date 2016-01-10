@@ -75,6 +75,9 @@ class TagsPlugin(Plugin):
 
         @self.env.urlresolver
         def tag_resolver(node, url_path):
+            if not self.has_config():
+                return
+
             u = build_url([node.url_path] + url_path, trailing_slash=True)
             return TagsPlugin.url_map.get(u)
 
@@ -83,9 +86,15 @@ class TagsPlugin(Plugin):
             parent_path = self.get_parent_path()
             if node.path == parent_path and len(pieces) == 1:
                 return TagPage(self, node, pieces[0])
+            if not self.has_config():
+                return
+
 
         @self.env.generator
         def generate_tag_pages(source):
+            if not self.has_config():
+                return
+
             parent_path = self.get_parent_path()
             if source.path != parent_path:
                 return
@@ -99,16 +108,14 @@ class TagsPlugin(Plugin):
                 page.set_url_path(url_path)
                 yield page
 
+    def has_config(self):
+        return not self.get_config().is_new
+
     def get_items_expression(self):
         return self.get_config().get('items', DEFAULT_ITEMS_QUERY)
 
     def get_parent_path(self):
-        config = self.get_config()
-        if config.is_new:
-            # Not configured.
-            return
-
-        p = config.get('parent')
+        p = self.get_config().get('parent')
         if not p:
             raise RuntimeError('Set the "parent" option in %s'
                                % self.config_filename)
