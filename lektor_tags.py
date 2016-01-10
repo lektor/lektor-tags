@@ -19,13 +19,10 @@ def _ensure_slash(s):
 
 
 class TagPage(VirtualSourceObject):
-    def __init__(self, plugin, parent, tag):
+    def __init__(self, parent, tag):
         VirtualSourceObject.__init__(self, parent)
         self.plugin = parent.pad.env.plugins['tags']
         self.tag = tag
-
-        # TODO: Must strong-ref the pad?
-        self.__pad = parent.pad
 
     @property
     def items(self):
@@ -83,12 +80,11 @@ class TagsPlugin(Plugin):
 
         @self.env.virtualpathresolver('tag')
         def tag_source_path_resolver(node, pieces):
-            parent_path = self.get_parent_path()
-            if node.path == parent_path and len(pieces) == 1:
-                return TagPage(self, node, pieces[0])
             if not self.has_config():
                 return
 
+            if node.path == self.get_parent_path() and len(pieces) == 1:
+                return TagPage(node, pieces[0])
 
         @self.env.generator
         def generate_tag_pages(source):
@@ -103,7 +99,7 @@ class TagsPlugin(Plugin):
             url_exp = FormatExpression(self.env, self.get_url_path_expression())
 
             for tag in self.get_all_tags(source):
-                page = TagPage(self, source, tag)
+                page = TagPage(source, tag)
                 url_path = url_exp.evaluate(pad, this=page, values={'tag': tag})
                 page.set_url_path(url_path)
                 yield page
