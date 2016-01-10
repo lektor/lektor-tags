@@ -111,3 +111,39 @@ url_path = {{ this.parent.url_path }}tag/{{ tag }}
 ```
 
 This expression generates URLs like `/blog/tag/coffee`.
+
+### `tags`
+
+Advanced configuration. An expression for the set of tags. The default expression is:
+
+```
+tags = parent.children.distinct("tags")
+```
+
+If you set `tags_field` to a different field name than "tags", the default expression uses your custom field name. For example if you have this line in `tags.ini`:
+
+```
+tags_field = labels
+```
+
+Then the default value of `tags` is:
+
+```
+tags = parent.children.distinct("labels")
+```
+
+You can use any template expression. For example, if your items have a "published" boolean field, you can select tags of published items:
+
+```
+tags = parent.children.filter(F.published).distinct("tags")
+```
+
+Or even list your tags manually:
+
+```
+tags = ["tag1", "tag2"]
+```
+
+See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db/query/).
+
+Tags are always deduplicated, and alphabetically ordered.

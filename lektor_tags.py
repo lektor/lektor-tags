@@ -110,6 +110,13 @@ class TagsPlugin(Plugin):
     def get_items_expression(self):
         return self.get_config().get('items', DEFAULT_ITEMS_QUERY)
 
+    def get_tags_expression(self):
+        tags_exp = self.get_config().get('tags')
+        if tags_exp:
+            return tags_exp
+
+        return 'parent.children.distinct("%s")' % self.get_tag_field_name()
+
     def get_parent_path(self):
         p = self.get_config().get('parent')
         if not p:
@@ -138,17 +145,6 @@ class TagsPlugin(Plugin):
         return self.get_config().get('tags_field', 'tags')
 
     def get_all_tags(self, parent):
-        # TODO: configurable tag filter.
-        tag_field = self.get_tag_field_name()
-        tags = set()
-        for item in parent.children:
-            if tag_field not in item:
-                # TODO: warn if "verbose" mode.
-                continue
-            item_tags = item[tag_field]
-            if isinstance(item_tags, (list, tuple)):
-                tags |= set(item_tags)
-            elif not isinstance(item_tags, Undefined):
-                tags.add(item_tags)
-
-        return sorted(tags)
+        exp = Expression(self.env, self.get_tags_expression())
+        tags = exp.evaluate(parent.pad, values={'parent': parent})
+        return sorted(set(tags))
