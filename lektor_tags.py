@@ -7,7 +7,7 @@ from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
-from lektor.utils import build_url
+from lektor.utils import build_url, bool_from_string
 from werkzeug.utils import cached_property
 
 DEFAULT_ITEMS_QUERY = 'this.parent.children.filter(F.tags.contains(tag))'
@@ -35,9 +35,12 @@ class TagPage(VirtualSourceObject):
 
     @property
     def url_path(self):
-        p = TagsPlugin.reverse_url_map[self.path]
-        assert p
-        return p
+        try:
+            return TagsPlugin.reverse_url_map[self.path]
+        except KeyError:
+            if self.plugin.ignore_missing():
+                return ''
+            raise
 
     def set_url_path(self, url_path):
         with_slash = _ensure_slash(url_path)
@@ -148,3 +151,6 @@ class TagsPlugin(Plugin):
         exp = Expression(self.env, self.get_tags_expression())
         tags = exp.evaluate(parent.pad, values={'parent': parent})
         return sorted(set(tags))
+
+    def ignore_missing(self):
+        return bool_from_string(self.get_config().get('ignore_missing'), False)
