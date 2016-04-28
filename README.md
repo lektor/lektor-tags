@@ -132,6 +132,12 @@ You can sort and filter with any expression:
 items = this.parent.children.filter(F.tags.contains(tag) and F.status == 'published').order_by('-pub_date')
 ```
 
+If the parent page has [a pagination query](https://www.getlektor.com/docs/guides/pagination/) you may want to use it for tagged pages:
+
+```ini
+items = this.parent.pagination.items.filter(F.tags.contains(tag))
+```
+
 See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db/query/).
 
 ### `tags_field`
