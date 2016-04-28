@@ -1,15 +1,5 @@
 # Lektor Tags Plugin
 
-## Pre-release note
-
-**Not yet published to PyPI, since it will require Lektor 2.0.** Instead of adding to your Lektor project, simply do:
-
-```
-pip install git+https://github.com/ajdavis/lektor-tags.git
-```
-
-You'll be able to configure and use the "tags" plugin without explicitly declaring it as a project dependency.
-
 ## Introduction
 
 This plugin implements tagging for your site. For each of your tags, it builds a page displaying a list of items that have that tag. This can be used for standard tag-based blog navigation.
