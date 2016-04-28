@@ -2,13 +2,11 @@
 import pkg_resources
 import posixpath
 
-from jinja2 import Undefined
 from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
 from lektor.utils import build_url, bool_from_string
-from werkzeug.utils import cached_property
 
 DEFAULT_ITEMS_QUERY = 'this.parent.children.filter(F.tags.contains(tag))'
 DEFAULT_URL_PATH_EXP = '{{ this.parent.url_path }}tag/{{ tag }}'
@@ -49,7 +47,7 @@ class TagPage(VirtualSourceObject):
 
     @property
     def template_name(self):
-        return self.plugin.get_template()
+        return self.plugin.get_template_filename()
 
 
 class TagPageBuildProgram(BuildProgram):
@@ -71,6 +69,8 @@ class TagsPlugin(Plugin):
     reverse_url_map = {}
 
     def on_setup_env(self, **extra):
+        pkg_dir = pkg_resources.resource_filename('lektor_tags', 'templates')
+        self.env.jinja_env.loader.searchpath.append(pkg_dir)
         self.env.add_build_program(TagPage, TagPageBuildProgram)
 
         @self.env.urlresolver
@@ -131,18 +131,12 @@ class TagsPlugin(Plugin):
     def get_url_path_expression(self):
         return self.get_config().get('url_path', DEFAULT_URL_PATH_EXP)
 
-    def get_template(self):
+    def get_template_filename(self):
         filename = self.get_config().get('template')
         if filename:
             return filename
 
-        return self._default_template
-
-    @cached_property
-    def _default_template(self):
-        stream = pkg_resources.resource_stream('lektor_tags',
-                                               'templates/tag.html')
-        return self.env.jinja_env.from_string(stream.read())
+        return 'lektor_tags_default_template.html'
 
     def get_tag_field_name(self):
         return self.get_config().get('tags_field', 'tags')
