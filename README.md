@@ -59,6 +59,7 @@ Make a `blog-post.html` template that includes:
       <li>
         <a href="{{ ('/blog@tag/' ~ t.lower())|url }}">
           All posts tagged {{ t }}
+        </a>
     {% endfor %}
   </ul>
 {% endif %}
