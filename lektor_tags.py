@@ -8,8 +8,8 @@ from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
 from lektor.utils import build_url, bool_from_string
 
-DEFAULT_ITEMS_QUERY = 'this.parent.children.filter(F.tags.contains(tag))'
-DEFAULT_URL_PATH_EXP = '{{ this.parent.url_path }}tag/{{ tag }}'
+DEFAULT_ITEMS_QUERY = 'this.parent.children.filter(F.tags.contains(tag.lower()))'
+DEFAULT_URL_PATH_EXP = '{{ this.parent.url_path }}tag/{{ tag.lower() }}'
 
 
 def _ensure_slash(s):
