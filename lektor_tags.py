@@ -62,8 +62,8 @@ class TagPageBuildProgram(BuildProgram):
 
 
 class TagsPlugin(Plugin):
-    name = u'blog-posts'
-    description = u'Lektor customization just for emptysqua.re.'
+    name = u'Tags'
+    description = u'Lektor plugin to add tags.'
     generated = False
     url_map = {}
     reverse_url_map = {}

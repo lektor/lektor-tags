@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This plugin implements tagging for your site. For each of your tags, it builds a page displaying a list of items that have that tag. This can be used for standard tag-based blog navigation.
+This plugin implements tagging for your site. For each of your tags, it builds a page displaying a list of items that have that tag. This can be used for standard tag-based blog navigation. With this plugin you can give any number of tags to any blog posts, and a page will be created for each tag.
 
-For example, if your site has blog posts like this in your `content/blog` directory:
+For example, if your site has blog posts in your `content/blog` directory tagged with `coffee` and `tea`:
 
 ```
 name: First Post
@@ -15,24 +15,18 @@ coffee
 tea
 ```
 
-Create a `configs/tags.ini`, like:
-
-```ini
-parent = /blog
-```
-
 The `lektor-tags` plugin builds pages at these URLs:
 
 * `/blog/tag/coffee/`
 * `/blog/tag/tea/`
 
-Each page lists all the posts with that tag.
+Each page can list all the posts with that tag.
 
 ## Installation
 
 Add lektor-tags to your project from command line:
 
-```
+```shell
 lektor plugins add lektor-tags
 ```
 
@@ -66,11 +60,11 @@ Make a `blog-post.html` template that includes:
 
 This expression in the template generates a *source path* for each of the blog post's tags:
 
-```
+```jinja
 '/blog@tag/' ~ t.lower()
 ```
 
-The if the tag is "my-tag", the expression renders a source path like:
+Then if the tag is "my-tag", the expression renders a source path like:
 
 ```
 /blog/tag/my-tag
