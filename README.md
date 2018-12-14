@@ -53,6 +53,8 @@ Make a `blog-post.html` template that includes:
       <li>
         <a href="{{ ('/blog@tag/' ~ t.lower())|url }}">
           All posts tagged {{ t }}
+        </a>
+      </li>
     {% endfor %}
   </ul>
 {% endif %}
@@ -73,7 +75,7 @@ Then if the tag is "my-tag", the expression renders a source path like:
 A Lektor source path becomes an actual URL using the `url` filter. So the template generates URLs to tag pages like:
 
 ```
-<a href="{{ ('/blog@tag/' ~ t.lower())|url }}">
+<a href="{{ ('/blog@tag/' ~ t.lower())|url }}"></a>
 ```
 
 This uses the source path expression from before, but pipes it through `url` to generate an actual link from the blog post to a tag page.
@@ -87,7 +89,7 @@ Set these options in `configs/tags.ini`:
 Required. The source path of the tag pages' parent page. For example:
 
 ```ini
-parent = blog
+parent = /blog
 ```
 
 Then tag pages' source paths are like:
