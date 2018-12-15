@@ -1,5 +1,8 @@
 # Lektor Tags Plugin
 
+[![PyPI version](https://badge.fury.io/py/lektor-tags.svg)](https://pypi.org/project/lektor-tags/)
+<a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+
 ## Introduction
 
 This plugin implements tagging for your site. For each of your tags, it builds a page displaying a list of items that have that tag. This can be used for standard tag-based blog navigation. With this plugin you can give any number of tags to any blog posts, and a page will be created for each tag.
