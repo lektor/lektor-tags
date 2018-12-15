@@ -200,7 +200,7 @@ If a blog post *draft* is not discoverable, and it has any new tags used by no p
 
 ### `tags`
 
-Advanced configuration. An expression for the set of tags. The default expression is:
+Advanced configuration. An expression for the set of tags. Note that this expression is also useful in a template to get a list of all tags. The default expression is:
 
 ```ini
 tags = parent.children.distinct("tags")
