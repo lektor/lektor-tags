@@ -144,7 +144,7 @@ class TagsPlugin(Plugin):
     def get_all_tags(self, parent):
         exp = Expression(self.env, self.get_tags_expression())
         tags = exp.evaluate(parent.pad, values={"parent": parent})
-        return sorted(set(tags))
+        return set(tags)
 
     def ignore_missing(self):
         return bool_from_string(self.get_config().get("ignore_missing"), False)

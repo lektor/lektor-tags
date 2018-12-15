@@ -20,7 +20,6 @@ setup(
     data_files=[("templates", ["templates/tag.html"])],
     description=description,
     include_package_data=True,
-    install_requires=["Lektor"],
     keywords="Lektor plugin static-site blog tags",
     license="MIT",
     long_description=readme,
