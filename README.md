@@ -54,7 +54,7 @@ Make a `blog-post.html` template that includes:
   <ul>
     {% for t in this.tags -%}
       <li>
-        <a href="{{ ('/blog@tag/' ~ t.lower())|url }}">
+        <a href="{{ ('/blog@tag/' ~ t)|url }}">
           All posts tagged {{ t }}
         </a>
       </li>
@@ -66,7 +66,7 @@ Make a `blog-post.html` template that includes:
 This expression in the template generates a *source path* for each of the blog post's tags:
 
 ```jinja
-'/blog@tag/' ~ t.lower()
+'/blog@tag/' ~ t
 ```
 
 Then if the tag is "my-tag", the expression renders a source path like:
@@ -78,7 +78,7 @@ Then if the tag is "my-tag", the expression renders a source path like:
 A Lektor source path becomes an actual URL using the `url` filter. So the template generates URLs to tag pages like:
 
 ```
-<a href="{{ ('/blog@tag/' ~ t.lower())|url }}"></a>
+<a href="{{ ('/blog@tag/' ~ t)|url }}"></a>
 ```
 
 This uses the source path expression from before, but pipes it through `url` to generate an actual link from the blog post to a tag page.
@@ -192,7 +192,7 @@ This allows URLs to missing tag pages to be silently replaced with "". The examp
 
 ```html
 {% for t in this.tags -%}
-  <a href="{{ ('/blog@tag/' ~ t.lower())|url }}">{{ t }}</a>
+  <a href="{{ ('/blog@tag/' ~ t)|url }}">{{ t }}</a>
 {% endfor %}
 ```
 
@@ -232,4 +232,4 @@ tags = ["tag1", "tag2"]
 
 See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db/query/).
 
-Tags are always deduplicated, and alphabetically ordered.
+Tags are always deduplicated. Tags are sorted in the order listed in the contents.lr / admin, allowing you to control their order manually. Since `{{ tags }}` simply returns a list, you can always apply any Jinja2 filter on that list such as sort, slice, or rejectattr.
