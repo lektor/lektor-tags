@@ -29,7 +29,7 @@ setup(
     py_modules=["lektor_tags"],
     tests_require=["pytest"],
     url="https://github.com/nixjdm/lektor-tags",
-    version="0.2",
+    version="0.3",
     zip_safe=False,
     classifiers=[
         "Environment :: Plugins",

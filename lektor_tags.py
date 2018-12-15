@@ -21,6 +21,7 @@ class TagPage(VirtualSourceObject):
         VirtualSourceObject.__init__(self, parent)
         self.plugin = parent.pad.env.plugins["tags"]
         self.tag = tag
+        self.i_want_to_live = self.pad  # See lektor-tags/issues/2
 
     @property
     def items(self):
