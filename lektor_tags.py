@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+
+# Tag weights contributed by Louis Paternault <spalax+python(at)gresille(dot)org>.
+
+import collections
 import pkg_resources
 import posixpath
+from math import log
 
 from lektor.build_programs import BuildProgram
 from lektor.environment import Expression, FormatExpression
@@ -107,6 +112,104 @@ class TagsPlugin(Plugin):
                 url_path = url_exp.evaluate(pad, this=page, values={"tag": tag})
                 page.set_url_path(url_path)
                 yield page
+
+    def on_process_template_context(self, context, **extra):
+        pad = self.env.new_pad()
+
+        # Count tags, to be aggregated as "tag weights". Note that tags that
+        # only appear in non-discoverable pages are ignored.
+        tagcount = collections.defaultdict(int)
+        for page in pad.query(self.get_parent_path()):
+            for tag in page[self.get_tag_field_name()]:
+                tagcount[tag] += 1
+        if tagcount:
+            mincount = min(tagcount.values())
+            maxcount = max(tagcount.values())
+        else:
+            # There isn't a single tag
+            mincount = maxcount = 0
+
+        def _weight_count():
+            """Map each tag to the number of pages tagged with it."""
+            return tagcount
+
+        def _weight_linear(a, b):
+            """Map each tag with a number between `a` and `b`.
+
+            The less used tag is mapped `a`, the most used tag is mapped `b`.
+            Mapping is done using a linear function.
+            """
+            if mincount == maxcount:
+                return {tag: a for tag in tagcount}
+            return {
+                tag: (((b - a) * count + a * maxcount - b * mincount) / (maxcount - mincount))
+                for tag, count in tagcount.items()
+                }
+
+        def _weight_lineargroup(groups):
+            """Map each tag with an item of list `groups`.
+
+            The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+            Mapping is done using a linear function.
+            """
+            weights = _weight_linear(0, len(groups)-1)
+            return {
+                tag: groups[int(round(weights[tag]))]
+                for tag in tagcount
+                }
+
+        def _weight_log(a, b):
+            """Map each tag with a number between `a` and `b`.
+
+            The less used tag is mapped `a`, the most used tag is mapped `b`.
+            Mapping is done using a linear function over the logarithm of tag counts.
+
+            Theorem: The base of the logarithm used in this function is irrelevant.
+
+            Proof (ideo of):
+                Let t0 and t1 be the tag counts of the least and most used tag,
+                a and b the arguments of this function, and l the base of the
+                logarithm used in this function. Let t be the tag count of an
+                arbitrary tag. To what number is t mapped?
+
+                Let f be the linear function such that f(log(t0)/log(l))=a and
+                f(log(t1)/log(l))=b.
+
+                The expression of this function is:
+                f(x) = ((b-a)×log(l)×x+a×log(t0)-b×log(t1))/(log(t1)-log(t0)).
+
+                Thus, the arbitrary tag t is mapped to f(log(t)/log(l)), and
+                the `log(l)` is crossed out and `l` disappears: the number `l`
+                is irrelevant.
+            """
+            if mincount == maxcount:
+                return {tag: a for tag in tagcount}
+            return {
+                    tag: (((b - a) * log(count) + a * log(maxcount) - b * log(mincount)) / (log(maxcount) - log(mincount)))
+                    for tag, count in tagcount.items()
+                    }
+
+        def _weight_loggroup(groups):
+            """Map each tag with an item of list `groups`.
+
+            The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+            Mapping is done using a linear function over the logarithm of tag counts.
+            """
+            weights = _weight_log(0, len(groups)-1)
+            return {
+                    tag: groups[int(round(weights[tag]))]
+                    for tag in tagcount
+                    }
+
+        context.update(
+                tagweight = {
+                    'count': _weight_count,
+                    'linear': _weight_linear,
+                    'lineargroup': _weight_lineargroup,
+                    'log': _weight_log,
+                    'loggroup': _weight_loggroup,
+                    }
+                )
 
     def has_config(self):
         return not self.get_config().is_new
