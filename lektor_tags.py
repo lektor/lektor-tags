@@ -12,6 +12,7 @@ from lektor.environment import Expression, FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
 from lektor.utils import build_url, bool_from_string
+from lektor.context import get_ctx
 
 DEFAULT_ITEMS_QUERY = "this.parent.children.filter(F.tags.contains(tag))"
 DEFAULT_URL_PATH_EXP = "{{ this.parent.url_path }}tag/{{ tag }}"
@@ -113,102 +114,17 @@ class TagsPlugin(Plugin):
                 page.set_url_path(url_path)
                 yield page
 
-    def on_process_template_context(self, context, **extra):
+        # Tags will be counted only if needed
+        self._tagcount = None
 
-        # Count tags, to be aggregated as "tag weights". Note that tags that
-        # only appear in non-discoverable pages are ignored.
-        tagcount = collections.defaultdict(int)
-        for page in context['site'].query(self.get_parent_path()):
-            for tag in page[self.get_tag_field_name()]:
-                tagcount[tag] += 1
-        if tagcount:
-            mincount = min(tagcount.values())
-            maxcount = max(tagcount.values())
-        else:
-            # There isn't a single tag
-            mincount = maxcount = 0
-
-        def _weight_count():
-            """Map each tag to the number of pages tagged with it."""
-            return tagcount
-
-        def _weight_linear(a, b):
-            """Map each tag with a number between `a` and `b`.
-
-            The less used tag is mapped `a`, the most used tag is mapped `b`.
-            Mapping is done using a linear function.
-            """
-            if mincount == maxcount:
-                return {tag: a for tag in tagcount}
-            return {
-                tag: (((b - a) * count + a * maxcount - b * mincount) / (maxcount - mincount))
-                for tag, count in tagcount.items()
-                }
-
-        def _weight_lineargroup(groups):
-            """Map each tag with an item of list `groups`.
-
-            The less used tag is mapped with the first item, the most used tag is mapped with the last item.
-            Mapping is done using a linear function.
-            """
-            weights = _weight_linear(0, len(groups)-1)
-            return {
-                tag: groups[int(round(weights[tag]))]
-                for tag in tagcount
-                }
-
-        def _weight_log(a, b):
-            """Map each tag with a number between `a` and `b`.
-
-            The less used tag is mapped `a`, the most used tag is mapped `b`.
-            Mapping is done using a linear function over the logarithm of tag counts.
-
-            Theorem: The base of the logarithm used in this function is irrelevant.
-
-            Proof (ideo of):
-                Let t0 and t1 be the tag counts of the least and most used tag,
-                a and b the arguments of this function, and l the base of the
-                logarithm used in this function. Let t be the tag count of an
-                arbitrary tag. To what number is t mapped?
-
-                Let f be the linear function such that f(log(t0)/log(l))=a and
-                f(log(t1)/log(l))=b.
-
-                The expression of this function is:
-                f(x) = ((b-a)×log(l)×x+a×log(t0)-b×log(t1))/(log(t1)-log(t0)).
-
-                Thus, the arbitrary tag t is mapped to f(log(t)/log(l)), and
-                the `log(l)` is crossed out and `l` disappears: the number `l`
-                is irrelevant.
-            """
-            if mincount == maxcount:
-                return {tag: a for tag in tagcount}
-            return {
-                    tag: (((b - a) * log(count) + a * log(maxcount) - b * log(mincount)) / (log(maxcount) - log(mincount)))
-                    for tag, count in tagcount.items()
-                    }
-
-        def _weight_loggroup(groups):
-            """Map each tag with an item of list `groups`.
-
-            The less used tag is mapped with the first item, the most used tag is mapped with the last item.
-            Mapping is done using a linear function over the logarithm of tag counts.
-            """
-            weights = _weight_log(0, len(groups)-1)
-            return {
-                    tag: groups[int(round(weights[tag]))]
-                    for tag in tagcount
-                    }
-
-        context.update(
-                tagweight = {
-                    'count': _weight_count,
-                    'linear': _weight_linear,
-                    'lineargroup': _weight_lineargroup,
-                    'log': _weight_log,
-                    'loggroup': _weight_loggroup,
-                    }
-                )
+        # Build and add the `tagweight` dictionary to the jinja environment
+        self.env.jinja_env.globals["tagweight"] = {
+            "count": self._weight_count,
+            "linear": self._weight_linear,
+            "lineargroup": self._weight_lineargroup,
+            "log": self._weight_log,
+            "loggroup": self._weight_loggroup,
+        }
 
     def has_config(self):
         return not self.get_config().is_new
@@ -250,3 +166,103 @@ class TagsPlugin(Plugin):
 
     def ignore_missing(self):
         return bool_from_string(self.get_config().get("ignore_missing"), False)
+
+    def _get_tagcount(self):
+        """Return a dictionary of tag counts.
+
+        Compute it only once, and return the "cached" version then.
+        """
+        if self._tagcount is not None:
+            return self._tagcount
+
+        # Count tags, to be aggregated as "tag weights". Note that tags that
+        # only appear in non-discoverable pages are ignored.
+        self._tagcount = collections.defaultdict(int)
+        for page in get_ctx().pad.query(self.get_parent_path()):
+            for tag in page[self.get_tag_field_name()]:
+                self._tagcount[tag] += 1
+        return self._tagcount
+
+    def _get_minmax_count(self):
+        """Return a tuple of minimum and maximum tag counts."""
+        tagcount = self._get_tagcount()
+        if tagcount:
+            return min(tagcount.values()), max(tagcount.values())
+        else:
+            # There isn't a single tag
+            return 0, 0
+
+    def _weight_count(self):
+        """Map each tag to the number of pages tagged with it."""
+        return self._get_tagcount()
+
+    def _weight_linear(self, a, b):
+        """Map each tag with a number between `a` and `b`.
+
+        The less used tag is mapped `a`, the most used tag is mapped `b`.
+        Mapping is done using a linear function.
+        """
+        tagcount = self._get_tagcount()
+        mincount, maxcount = self._get_minmax_count()
+        if mincount == maxcount:
+            return {tag: a for tag in tagcount}
+        return {
+            tag: (
+                ((b - a) * count + a * maxcount - b * mincount) / (maxcount - mincount)
+            )
+            for tag, count in tagcount.items()
+        }
+
+    def _weight_lineargroup(self, groups):
+        """Map each tag with an item of list `groups`.
+
+        The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+        Mapping is done using a linear function.
+        """
+        weights = self._weight_linear(0, len(groups) - 1)
+        return {tag: groups[int(round(weights[tag]))] for tag in self._get_tagcount()}
+
+    def _weight_log(self, a, b):
+        """Map each tag with a number between `a` and `b`.
+
+        The less used tag is mapped `a`, the most used tag is mapped `b`.
+        Mapping is done using a linear function over the logarithm of tag counts.
+
+        Theorem: The base of the logarithm used in this function is irrelevant.
+
+        Proof (ideo of):
+            Let t0 and t1 be the tag counts of the least and most used tag,
+            a and b the arguments of this function, and l the base of the
+            logarithm used in this function. Let t be the tag count of an
+            arbitrary tag. To what number is t mapped?
+
+            Let f be the linear function such that f(log(t0)/log(l))=a and
+            f(log(t1)/log(l))=b.
+
+            The expression of this function is:
+            f(x) = ((b-a)×log(l)×x+a×log(t0)-b×log(t1))/(log(t1)-log(t0)).
+
+            Thus, the arbitrary tag t is mapped to f(log(t)/log(l)), and
+            the `log(l)` is crossed out and `l` disappears: the number `l`
+            is irrelevant.
+        """
+        tagcount = self._get_tagcount()
+        mincount, maxcount = self._get_minmax_count()
+        if mincount == maxcount:
+            return {tag: a for tag in tagcount}
+        return {
+            tag: (
+                ((b - a) * log(count) + a * log(maxcount) - b * log(mincount))
+                / (log(maxcount) - log(mincount))
+            )
+            for tag, count in tagcount.items()
+        }
+
+    def _weight_loggroup(self, groups):
+        """Map each tag with an item of list `groups`.
+
+        The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+        Mapping is done using a linear function over the logarithm of tag counts.
+        """
+        weights = self._weight_log(0, len(groups) - 1)
+        return {tag: groups[int(round(weights[tag]))] for tag in self._get_tagcount()}
