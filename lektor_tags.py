@@ -114,12 +114,11 @@ class TagsPlugin(Plugin):
                 yield page
 
     def on_process_template_context(self, context, **extra):
-        pad = self.env.new_pad()
 
         # Count tags, to be aggregated as "tag weights". Note that tags that
         # only appear in non-discoverable pages are ignored.
         tagcount = collections.defaultdict(int)
-        for page in pad.query(self.get_parent_path()):
+        for page in context['site'].query(self.get_parent_path()):
             for tag in page[self.get_tag_field_name()]:
                 tagcount[tag] += 1
         if tagcount:
