@@ -91,11 +91,10 @@ class TagWeights:
 
     def _minmax(self):
         """Return a tuple of minimum and maximum tag counts."""
-        # Get the ascending list of tag counts (without tags) (e.g. [1, 1, 5, 8]).
-        counts = [pair[1] for pair in reversed(self.count().most_common())]
+        counts = self.count().most_common()
         if counts:
-            # Return first and last items (i.e. smaller and bigger number).
-            return counts[0 : len(counts) : len(counts) - 1]
+            # Return last and first counts (i.e. smaller and bigger number).
+            return counts[-1][1], counts[0][1]
         else:
             # There isn't a single tag
             return 0, 0
