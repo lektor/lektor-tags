@@ -85,14 +85,14 @@ class TagWeights:
         # Count tags, to be aggregated as "tag weights". Note that tags that
         # only appear in non-discoverable pages are ignored.
         self._tagcount = collections.Counter()
-        for page in get_ctx().pad.query(self.get_parent_path()):
-            self._tagcount.update(page[self.get_tag_field_name()])
+        for page in get_ctx().pad.query(self._tagsplugin.get_parent_path()):
+            self._tagcount.update(page[self._tagsplugin.get_tag_field_name()])
         return self._tagcount
 
     def _minmax(self):
         """Return a tuple of minimum and maximum tag counts."""
         # Get the ascending list of tag counts (without tags) (e.g. [1, 1, 5, 8]).
-        counts = [pair[1] for pair in reversed(self.count())]
+        counts = [pair[1] for pair in reversed(self.count().most_common())]
         if counts:
             # Return first and last items (i.e. smaller and bigger number).
             return counts[0 : len(counts) : len(counts) - 1]
