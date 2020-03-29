@@ -199,7 +199,7 @@ class TagsPlugin(Plugin):
     def _weight_linear(self, a, b):
         """Map each tag with a number between `a` and `b`.
 
-        The less used tag is mapped `a`, the most used tag is mapped `b`.
+        The least used tag is mapped `a`, the most used tag is mapped `b`.
         Mapping is done using a linear function.
         """
         tagcount = self._get_tagcount()
@@ -216,7 +216,7 @@ class TagsPlugin(Plugin):
     def _weight_lineargroup(self, groups):
         """Map each tag with an item of list `groups`.
 
-        The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+        The least used tag is mapped with the first item, the most used tag is mapped with the last item.
         Mapping is done using a linear function.
         """
         weights = self._weight_linear(0, len(groups) - 1)
@@ -225,7 +225,7 @@ class TagsPlugin(Plugin):
     def _weight_log(self, a, b):
         """Map each tag with a number between `a` and `b`.
 
-        The less used tag is mapped `a`, the most used tag is mapped `b`.
+        The least used tag is mapped `a`, the most used tag is mapped `b`.
         Mapping is done using a linear function over the logarithm of tag counts.
 
         Theorem: The base of the logarithm used in this function is irrelevant.
@@ -261,7 +261,7 @@ class TagsPlugin(Plugin):
     def _weight_loggroup(self, groups):
         """Map each tag with an item of list `groups`.
 
-        The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+        The least used tag is mapped with the first item, the most used tag is mapped with the last item.
         Mapping is done using a linear function over the logarithm of tag counts.
         """
         weights = self._weight_log(0, len(groups) - 1)
