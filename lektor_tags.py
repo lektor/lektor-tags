@@ -196,19 +196,20 @@ class TagsPlugin(Plugin):
         """Map each tag to the number of pages tagged with it."""
         return self._get_tagcount()
 
-    def _weight_linear(self, a, b):
-        """Map each tag with a number between `a` and `b`.
+    def _weight_linear(self, lower, upper):
+        """Map each tag with a number between `lower` and `upper`.
 
-        The least used tag is mapped `a`, the most used tag is mapped `b`.
+        The least used tag is mapped `lower`, the most used tag is mapped `upper`.
         Mapping is done using a linear function.
         """
         tagcount = self._get_tagcount()
         mincount, maxcount = self._get_minmax_count()
         if mincount == maxcount:
-            return {tag: a for tag in tagcount}
+            return {tag: lower for tag in tagcount}
         return {
             tag: (
-                ((b - a) * count + a * maxcount - b * mincount) / (maxcount - mincount)
+                ((upper - lower) * count + lower * maxcount - upper * mincount)
+                / (maxcount - mincount)
             )
             for tag, count in tagcount.items()
         }
@@ -222,19 +223,20 @@ class TagsPlugin(Plugin):
         weights = self._weight_linear(0, len(groups) - 1)
         return {tag: groups[int(round(weights[tag]))] for tag in self._get_tagcount()}
 
-    def _weight_log(self, a, b):
-        """Map each tag with a number between `a` and `b`.
+    def _weight_log(self, lower, upper):
+        """Map each tag with a number between `lower` and `upper`.
 
-        The least used tag is mapped `a`, the most used tag is mapped `b`.
+        The least used tag is mapped `lower`, the most used tag is mapped `upper`.
         Mapping is done using a linear function over the logarithm of tag counts.
 
         Theorem: The base of the logarithm used in this function is irrelevant.
 
         Proof (ideo of):
             Let t0 and t1 be the tag counts of the least and most used tag,
-            a and b the arguments of this function, and l the base of the
-            logarithm used in this function. Let t be the tag count of an
-            arbitrary tag. To what number is t mapped?
+            a and b the `lower` and `upper` arguments of this function, and l
+            the base of the logarithm used in this function. Let t be the tag
+            count of an arbitrary tag.
+            To what number is t mapped?
 
             Let f be the linear function such that f(log(t0)/log(l))=a and
             f(log(t1)/log(l))=b.
@@ -249,10 +251,14 @@ class TagsPlugin(Plugin):
         tagcount = self._get_tagcount()
         mincount, maxcount = self._get_minmax_count()
         if mincount == maxcount:
-            return {tag: a for tag in tagcount}
+            return {tag: lower for tag in tagcount}
         return {
             tag: (
-                ((b - a) * log(count) + a * log(maxcount) - b * log(mincount))
+                (
+                    (upper - lower) * log(count)
+                    + lower * log(maxcount)
+                    - upper * log(mincount)
+                )
                 / (log(maxcount) - log(mincount))
             )
             for tag, count in tagcount.items()

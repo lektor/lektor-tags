@@ -245,7 +245,7 @@ In those functions, unused tags are ignored.
 ### TD;DR Which weight function should I use?
 
 - To get the number of pages tagged by each tag, use `tagweight.count()`.
-- To map tags to numbers, use `tagweight.log(a, b)`.
+- To map tags to numbers, use `tagweight.log(lower, upper)`.
 - To map tags to everything else, use `tagweight.loggroup(list)`.
 
 ### `count` — Number of pages tagged with this tag
@@ -262,9 +262,9 @@ This is the basic weight, used as a base for the following tags.
 </ul>
 ```
 
-### `linear` — Tags are mapped with a number between `a` and `b`.
+### `linear` — Tags are mapped with a number between `lower` and `upper`.
 
-The less used tag is mapped `a`, the most used tag is mapped `b` (`a` and `b` can be equal, `b` can be smaller than `a`).
+The less used tag is mapped `lower`, the most used tag is mapped `upper` (`lower` and `upper` can be equal, `upper` can be smaller than `lower`).
 
 Mapping is done using a linear function.
 
@@ -272,9 +272,9 @@ The result is a float: you might want to convert them to integers first (see exa
 
 Unless very specific cases, you should use `log` instead.
 
-### `log` — Logarithm of tag counts are mapped with a number between `a` and `b`.
+### `log` — Logarithm of tag counts are mapped with a number between `lower` and `upper`.
 
-The less used tag is mapped `a`, the most used tag is mapped `b` (`a` and `b` can be equal, `b` can be smaller than `a`).
+The less used tag is mapped `lower`, the most used tag is mapped `upper` (`lower` and `upper` can be equal, `upper` can be smaller than `lower`).
 
 Mapping is done using a linear function over the logarithm of tag counts.
 
