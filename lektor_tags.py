@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Tag weights contributed by Louis Paternault <spalax+python(at)gresille(dot)org>.
-
 import collections
 import pkg_resources
 import posixpath
