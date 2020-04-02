@@ -187,6 +187,9 @@ class TagsPlugin(Plugin):
         self.env.jinja_env.loader.searchpath.append(pkg_dir)
         self.env.add_build_program(TagPage, TagPageBuildProgram)
 
+        # Add the `tagweights` dictionary to the jinja environment
+        self.env.jinja_env.globals["tagweights"] = TagWeights(self)
+
         @self.env.urlresolver
         def tag_resolver(node, url_path):
             if not self.has_config():
@@ -221,6 +224,7 @@ class TagsPlugin(Plugin):
                 page.set_url_path(url_path)
                 yield page
 
+    def on_before_build_all(self, *args, **kwargs):
         # Add the `tagweights` dictionary to the jinja environment
         self.env.jinja_env.globals["tagweights"] = TagWeights(self)
 
