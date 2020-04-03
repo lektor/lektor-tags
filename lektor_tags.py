@@ -225,7 +225,8 @@ class TagsPlugin(Plugin):
                 yield page
 
     def on_before_build_all(self, *args, **kwargs):
-        # Add the `tagweights` dictionary to the jinja environment
+        # Reset the `tagweights` dictionary in the jinja environment.
+        # Needed to invalidate the tag cache before each build.
         self.env.jinja_env.globals["tagweights"] = TagWeights(self)
 
     def has_config(self):
