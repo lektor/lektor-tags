@@ -1,7 +1,8 @@
 import os
-import pytest
 import shutil
 import tempfile
+
+import pytest
 
 
 @pytest.fixture(scope="function")
