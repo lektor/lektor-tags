@@ -28,7 +28,8 @@ setup(
     py_modules=["lektor_tags"],
     tests_require=["pytest"],
     url="https://github.com/nixjdm/lektor-tags",
-    version="0.3",
+    use_scm_version=True,
+    setup_requires=["setuptools_scm"],
     zip_safe=False,
     classifiers=[
         "Environment :: Plugins",
