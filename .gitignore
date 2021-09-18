@@ -4,3 +4,4 @@ build
 *.pyo
 *.egg-info
 .cache
+.tox
