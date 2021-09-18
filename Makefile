@@ -1,0 +1,2 @@
+test:
+	tox -e py
