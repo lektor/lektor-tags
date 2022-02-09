@@ -69,54 +69,38 @@ class TagPageBuildProgram(BuildProgram):
         artifact.render_template_into(self.source.template_name, this=self.source)
 
 
-class TagWeights:
-    def __init__(self, tagsplugin):
-        self._tagsplugin = tagsplugin
-        # Tags will be counted only if needed
-        self._tagcount = None
+class TagWeight:
+    def __init__(self, count, mincount, maxcount):
+        self.count = count
+        self.mincount = mincount
+        self.maxcount = maxcount
 
-    def count(self):
-        """Map each tag to the number of pages tagged with it.
+    def __lt__(self, other):
+        return self.count < other.count
 
-        Compute it only once, and return the "cached" version then.
-        """
-        if self._tagcount is not None:
-            return self._tagcount
+    def __le__(self, other):
+        return self.count <= other.count
 
-        # Count tags, to be aggregated as "tag weights". Note that tags that
-        # only appear in non-discoverable pages are ignored.
-        self._tagcount = collections.Counter()
-        for page in get_ctx().pad.query(self._tagsplugin.get_parent_path()):
-            self._tagcount.update(page[self._tagsplugin.get_tag_field_name()])
-        return self._tagcount
+    def __gt__(self, other):
+        return self.count > other.count
 
-    def _minmax(self):
-        """Return a tuple of minimum and maximum tag counts."""
-        counts = self.count().most_common()
-        if counts:
-            # Return last and first counts (i.e. smaller and bigger number).
-            return counts[-1][1], counts[0][1]
-        else:
-            # There isn't a single tag
-            return 0, 0
+    def __ge__(self, other):
+        return self.count >= other.count
+
+    def __eq__(self, other):
+        return self.count == other.count
 
     def linear(self, lower, upper):
-        """Map each tag with a number between `lower` and `upper`.
+        """Map tag with a number between `lower` and `upper`.
 
         The least used tag is mapped `lower`, the most used tag is mapped `upper`.
         Mapping is done using a linear function.
         """
-        tagcount = self.count()
-        mincount, maxcount = self._minmax()
-        if mincount == maxcount:
-            return {tag: lower for tag in tagcount}
-        return {
-            tag: (
-                ((upper - lower) * count + lower * maxcount - upper * mincount)
-                / (maxcount - mincount)
-            )
-            for tag, count in tagcount.items()
-        }
+        if self.mincount == self.maxcount:
+            return lower
+        return (
+            (upper - lower) * self.count + lower * self.maxcount - upper * self.mincount
+        ) / (self.maxcount - self.mincount)
 
     def lineargroup(self, groups):
         """Map each tag with an item of list `groups`.
@@ -124,8 +108,7 @@ class TagWeights:
         The least used tag is mapped with the first item, the most used tag is mapped with the last item.
         Mapping is done using a linear function.
         """
-        weights = self.linear(0, len(groups) - 1)
-        return {tag: groups[int(round(weights[tag]))] for tag in self.count()}
+        return groups[int(round(self.linear(0, len(groups) - 1)))]
 
     def log(self, lower, upper):
         """Map each tag with a number between `lower` and `upper`.
@@ -135,7 +118,7 @@ class TagWeights:
 
         Theorem: The base of the logarithm used in this function is irrelevant.
 
-        Proof (ideo of):
+        Proof (idea of):
             Let t0 and t1 be the tag counts of the least and most used tag,
             a and b the `lower` and `upper` arguments of this function, and l
             the base of the logarithm used in this function. Let t be the tag
@@ -152,21 +135,13 @@ class TagWeights:
             the `log(l)` is crossed out and `l` disappears: the number `l`
             is irrelevant.
         """
-        tagcount = self.count()
-        mincount, maxcount = self._minmax()
-        if mincount == maxcount:
-            return {tag: lower for tag in tagcount}
-        return {
-            tag: (
-                (
-                    (upper - lower) * log(count)
-                    + lower * log(maxcount)
-                    - upper * log(mincount)
-                )
-                / (log(maxcount) - log(mincount))
-            )
-            for tag, count in tagcount.items()
-        }
+        if self.mincount == self.maxcount:
+            return lower
+        return (
+            (upper - lower) * log(self.count)
+            + lower * log(self.maxcount)
+            - upper * log(self.mincount)
+        ) / (log(self.maxcount) - log(self.mincount))
 
     def loggroup(self, groups):
         """Map each tag with an item of list `groups`.
@@ -174,8 +149,9 @@ class TagWeights:
         The least used tag is mapped with the first item, the most used tag is mapped with the last item.
         Mapping is done using a linear function over the logarithm of tag counts.
         """
-        weights = self.log(0, len(groups) - 1)
-        return {tag: groups[int(round(weights[tag]))] for tag in self.count()}
+        return groups[int(round(self.log(0, len(groups) - 1)))]
+
+
 
 
 class TagsPlugin(Plugin):
@@ -189,9 +165,6 @@ class TagsPlugin(Plugin):
         pkg_dir = pkg_resources.resource_filename("lektor_tags", "templates")
         self.env.jinja_env.loader.searchpath.append(pkg_dir)
         self.env.add_build_program(TagPage, TagPageBuildProgram)
-
-        # Add the `tagweights` dictionary to the jinja environment
-        self.env.jinja_env.globals["tagweights"] = TagWeights(self)
 
         @self.env.urlresolver
         def tag_resolver(node, url_path):
@@ -230,7 +203,7 @@ class TagsPlugin(Plugin):
     def on_before_build_all(self, *args, **kwargs):
         # Reset the `tagweights` dictionary in the jinja environment.
         # Needed to invalidate the tag cache before each build.
-        self.env.jinja_env.globals["tagweights"] = TagWeights(self)
+        self.env.jinja_env.globals["tagweights"] = self.tagweights
 
     def has_config(self):
         return not self.get_config().is_new
@@ -272,3 +245,36 @@ class TagsPlugin(Plugin):
 
     def ignore_missing(self):
         return bool_from_string(self.get_config().get("ignore_missing"), False)
+
+    def tagcount(self):
+        """Map each tag to the number of pages tagged with it."""
+        # Count tags, to be aggregated as "tag weights". Note that tags that
+        # only appear in non-discoverable pages are ignored.
+        tagcount = collections.Counter()
+        for page in get_ctx().pad.query(self.get_parent_path()):
+            tagcount.update(page[self.get_tag_field_name()])
+        return tagcount
+
+    def tagweights(self):
+        """Return the dictionary of tag weights.
+
+        That is:
+            - keys are tags (strings);
+            - weights are TagWeight objects.
+
+        This function is to be called AFTER the build have started
+        (so that ``get_ctx()`` returns something).
+        """
+        tagcount = self.tagcount()
+
+        most_common = tagcount.most_common()
+        if most_common:
+            # Return last and first counts (i.e. smaller and bigger number).
+            mincount, maxcount = most_common[-1][1], most_common[0][1]
+        else:
+            # There isn't a single tag
+            mincount = maxcount = 0
+
+        return {
+            tag: TagWeight(count, mincount, maxcount) for tag, count in tagcount.items()
+        }

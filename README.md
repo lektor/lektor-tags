@@ -242,11 +242,11 @@ The Jinja2 context has a `tagweights` dictionary, to map tags to their weight us
 
 In those functions, unused tags are ignored.
 
-### TD;DR Which weight function should I use?
+### TL;DR Which weight function should I use?
 
-- To get the number of pages tagged by each tag, use `tagweights.count()`.
-- To map tags to numbers, use `tagweights.log(lower, upper)`.
-- To map tags to everything else, use `tagweights.loggroup(list)`.
+- To get the number of pages tagged by each tag, use `count`.
+- To map tags to numbers, use `log(lower, upper)`.
+- To map tags to everything else, use `loggroup(list)`.
 
 ### `count` — Number of pages tagged with this tag
 
@@ -256,8 +256,8 @@ This is the basic weight, used as a base for the following tags.
 
 ```jinja
 <ul>
-{% for tag, weight in (tagweights.count() | dictsort(by='value', reverse=true)) %}
-    <li>{{ tag }} ({{ tagweights.count()[tag] }} articles).</li>
+{% for tag, weight in (tagweights() | dictsort(by='value', reverse=true)) %}
+    <li>{{ tag }} ({{ weight.count }} articles).</li>
 {% endfor %}
 </ul>
 ```
@@ -270,7 +270,7 @@ Mapping is done using a linear function.
 
 The result is a float: you might want to convert them to integers first (see example for `log`).
 
-Unless very specific cases, you should use `log` instead.
+Unless you know what you are doing, you should use `log` instead.
 
 ### `log` — Logarithm of tag counts are mapped with a number between `lower` and `upper`.
 
@@ -283,10 +283,10 @@ The result is a float: you might want to convert them to integers first (see exa
 #### Example: Most used tag is twice as big as least used tag
 
 ```jinja
-{% for tag, weight in tagweights.log(100, 200).items()|sort %}
+{% for tag, weight in tagweights()|dictsort %}
 <a
     href="{{ ('/blog@tag/' ~ tag)|url }}"
-    style="font-size: {{ weight|round|int }}%;"
+    style="font-size: {{ weight.log(100, 200)|round|int }}%;"
     >
         {{ tag }}
     </a>
@@ -299,7 +299,7 @@ The less used tag is mapped with the first item, the most used tag is mapped wit
 
 Mapping is done using a linear function.
 
-Unless very specific cases, use `loggroup` instead.
+Unless you know what you are doing, you should use `loggroup` instead.
 
 ### `loggroup` — Logarithm of tag counts are mapped with an item of the list given in argument
 
@@ -307,13 +307,13 @@ The less used tag is mapped with the first item, the most used tag is mapped wit
 
 Mapping is done using a linear function over the logarithm of tag counts.
 
-#### Example: Tags are given classes `tagcloud-tiny`, `tagcloud-small`, etc.
+#### Example: Tags are given CSS classes `tagcloud-tiny`, `tagcloud-small`, etc.
 
 ```jinja
-{% for tag, weight in tagweights.loggroup(["tiny", "small", "normal", "big", "large"]).items()|sort %}
+{% for tag, weight in tagweights()|dictsort %}
 <a
     href="{{ ('/blog@tag/' ~ tag)|url }}"
-    class="tagcloud-{{ weight }}"
+    class="tagcloud-{{ weight.loggroup(["tiny", "small", "normal", "big", "large"]) }}"
     >
         {{ tag }}
     </a>
