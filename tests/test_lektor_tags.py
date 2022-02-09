@@ -46,7 +46,7 @@ def test_virtual_resolver(pad, builder):
     page = pad.get("blog@tag/tag1")
     assert page and page.tag == "tag1"
     url_path = page.url_to(pad.get("blog/post1"))
-    assert url_path == "../../../blog/post1/"
+    assert url_path == "../../post1/"
 
 
 def test_tags_expression(pad, builder, env):
@@ -56,7 +56,7 @@ def test_tags_expression(pad, builder, env):
         parent = pad.get("/blog")
 
         conf["tags"] = 'parent.children.filter(F.published).distinct("tags")'
-        assert plugin.get_all_tags(parent) == ["tag1", "tag2"]
+        assert plugin.get_all_tags(parent) == {"tag1", "tag2"}
 
         conf["tags"] = '["foo", "bar", "bar"]'
-        assert plugin.get_all_tags(parent) == ["bar", "foo"]
+        assert plugin.get_all_tags(parent) == {"bar", "foo"}

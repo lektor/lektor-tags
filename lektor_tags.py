@@ -5,11 +5,14 @@ import pkg_resources
 import posixpath
 from math import log
 
+import pkg_resources
 from lektor.build_programs import BuildProgram
-from lektor.environment import Expression, FormatExpression
+from lektor.environment import Expression
+from lektor.environment import FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
-from lektor.utils import build_url, bool_from_string
+from lektor.utils import bool_from_string
+from lektor.utils import build_url
 from lektor.context import get_ctx
 
 DEFAULT_ITEMS_QUERY = "this.parent.children.filter(F.tags.contains(tag))"
