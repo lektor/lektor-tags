@@ -238,9 +238,9 @@ Tags are always deduplicated. Tags are sorted in the order listed in the content
 
 This plugin won't automatically build a tag cloud, but it provides the tools to build it.
 
-The Jinja2 context has a `tagweights` dictionary, to map tags to their weight using several functions. Each of those functions return a dictonary mapping tags (as strings) to their weight. Here are those functions, with examples of how they can be used in a template.
+The Jinja2 context has a `tagweights()` function, which returns a dictionary that maps tags to their weight using several attributes or functions. Here are those attributes and functions, with examples of how they can be used in a template.
 
-In those functions, unused tags are ignored.
+Unused tags are ignored.
 
 ### TL;DR Which weight function should I use?
 
