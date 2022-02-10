@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-
 import collections
-import pkg_resources
 import posixpath
 from math import log
 
 import pkg_resources
 from lektor.build_programs import BuildProgram
+from lektor.context import get_ctx
 from lektor.environment import Expression
 from lektor.environment import FormatExpression
 from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
 from lektor.utils import bool_from_string
 from lektor.utils import build_url
-from lektor.context import get_ctx
 
 DEFAULT_ITEMS_QUERY = "this.parent.children.filter(F.tags.contains(tag))"
 DEFAULT_URL_PATH_EXP = "{{ this.parent.url_path }}tag/{{ tag }}"
@@ -150,8 +148,6 @@ class TagWeight:
         Mapping is done using a linear function over the logarithm of tag counts.
         """
         return groups[int(round(self.log(0, len(groups) - 1)))]
-
-
 
 
 class TagsPlugin(Plugin):
