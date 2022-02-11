@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import collections
 import posixpath
+from dataclasses import dataclass
 from math import log
 
 import pkg_resources
@@ -67,11 +68,12 @@ class TagPageBuildProgram(BuildProgram):
         artifact.render_template_into(self.source.template_name, this=self.source)
 
 
+@dataclass
 class TagWeight:
-    def __init__(self, count, mincount, maxcount):
-        self.count = count
-        self.mincount = mincount
-        self.maxcount = maxcount
+
+    count: int
+    mincount: int
+    maxcount: int
 
     def __lt__(self, other):
         return self.count < other.count
