@@ -2,6 +2,7 @@
 import collections
 import posixpath
 from dataclasses import dataclass
+from functools import total_ordering
 from math import log
 
 import pkg_resources
@@ -76,16 +77,9 @@ class TagWeight:
     maxcount: int
 
     def __lt__(self, other):
-        return self.count < other.count
-
-    def __le__(self, other):
-        return self.count <= other.count
-
-    def __gt__(self, other):
-        return self.count > other.count
-
-    def __ge__(self, other):
-        return self.count >= other.count
+        if isinstance(other, self.__class__):
+            return self.count < other.count
+        raise NotImplementedError
 
     def __eq__(self, other):
         return self.count == other.count
