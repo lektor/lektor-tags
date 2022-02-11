@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import collections
+import contextlib
 import posixpath
 from dataclasses import dataclass
 from functools import total_ordering
@@ -238,7 +239,8 @@ class TagsPlugin(Plugin):
         # only appear in non-discoverable pages are ignored.
         tagcount = collections.Counter()
         for page in get_ctx().pad.query(self.get_parent_path()):
-            tagcount.update(page[self.get_tag_field_name()])
+            with contextlib.suppress(KeyError, TypeError):
+                tagcount.update(page[self.get_tag_field_name()])
         return tagcount
 
     def tagweights(self):
