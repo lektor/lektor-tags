@@ -233,3 +233,89 @@ tags = ["tag1", "tag2"]
 See [the Lektor documentation for queries](https://www.getlektor.com/docs/api/db/query/).
 
 Tags are always deduplicated. Tags are sorted in the order listed in the contents.lr / admin, allowing you to control their order manually. Since `{{ tags }}` simply returns a list, you can always apply any Jinja2 filter on that list such as sort, slice, or rejectattr.
+
+## Tag cloud & tag weights
+
+This plugin won't automatically build a tag cloud, but it provides the tools to build it.
+
+The Jinja2 context has a `tagweights()` function, which returns a dictionary that maps tags to their weight using several attributes or functions. Here are those attributes and functions, with examples of how they can be used in a template.
+
+Unused tags are ignored.
+
+### TL;DR Which weight function should I use?
+
+- To get the number of pages tagged by each tag, use `count`.
+- To map tags to numbers, use `log(lower, upper)`.
+- To map tags to everything else, use `loggroup(list)`.
+
+### `count` — Number of pages tagged with this tag
+
+This is the basic weight, used as a base for the following tags.
+
+#### Example: Tags (with tag count) sorted by tag count (most used first)
+
+```jinja
+<ul>
+{% for tag, weight in (tagweights() | dictsort(by='value', reverse=true)) %}
+    <li>{{ tag }} ({{ weight.count }} articles).</li>
+{% endfor %}
+</ul>
+```
+
+### `linear` — Tags are mapped with a number between `lower` and `upper`.
+
+The less used tag is mapped `lower`, the most used tag is mapped `upper` (`lower` and `upper` can be equal, `upper` can be smaller than `lower`).
+
+Mapping is done using a linear function.
+
+The result is a float: you might want to convert them to integers first (see example for `log`).
+
+Unless you know what you are doing, you should use `log` instead.
+
+### `log` — Logarithm of tag counts are mapped with a number between `lower` and `upper`.
+
+The less used tag is mapped `lower`, the most used tag is mapped `upper` (`lower` and `upper` can be equal, `upper` can be smaller than `lower`).
+
+Mapping is done using a linear function over the logarithm of tag counts.
+
+The result is a float: you might want to convert them to integers first (see example).
+
+#### Example: Most used tag is twice as big as least used tag
+
+```jinja
+{% for tag, weight in tagweights()|dictsort %}
+<a
+    href="{{ ('/blog@tag/' ~ tag)|url }}"
+    style="font-size: {{ weight.log(100, 200)|round|int }}%;"
+    >
+        {{ tag }}
+    </a>
+{% endfor %}
+```
+
+### `lineargroup` — Map each tag with an item of the list given in argument
+
+The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+
+Mapping is done using a linear function.
+
+Unless you know what you are doing, you should use `loggroup` instead.
+
+### `loggroup` — Logarithm of tag counts are mapped with an item of the list given in argument
+
+The less used tag is mapped with the first item, the most used tag is mapped with the last item.
+
+Mapping is done using a linear function over the logarithm of tag counts.
+
+#### Example: Tags are given CSS classes `tagcloud-tiny`, `tagcloud-small`, etc.
+
+```jinja
+{% for tag, weight in tagweights()|dictsort %}
+<a
+    href="{{ ('/blog@tag/' ~ tag)|url }}"
+    class="tagcloud-{{ weight.loggroup(["tiny", "small", "normal", "big", "large"]) }}"
+    >
+        {{ tag }}
+    </a>
+{% endfor %}
+```

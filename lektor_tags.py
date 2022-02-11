@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
+import collections
+import contextlib
 import posixpath
+from dataclasses import dataclass
+from functools import total_ordering
+from math import log
 
 import pkg_resources
 from lektor.build_programs import BuildProgram
+from lektor.context import get_ctx
 from lektor.environment import Expression
 from lektor.environment import FormatExpression
 from lektor.pluginsystem import Plugin
@@ -64,6 +70,84 @@ class TagPageBuildProgram(BuildProgram):
         artifact.render_template_into(self.source.template_name, this=self.source)
 
 
+@total_ordering
+@dataclass
+class TagWeight:
+
+    count: int
+    mincount: int
+    maxcount: int
+
+    def __lt__(self, other):
+        if isinstance(other, self.__class__):
+            return self.count < other.count
+        return NotImplemented
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.count == other.count
+        return NotImplemented
+
+    def linear(self, lower, upper):
+        """Map tag with a number between `lower` and `upper`.
+
+        The least used tag is mapped `lower`, the most used tag is mapped `upper`.
+        Mapping is done using a linear function.
+        """
+        if self.mincount == self.maxcount:
+            return lower
+        return lower + (upper - lower) * (self.count - self.mincount) / (
+            self.maxcount - self.mincount
+        )
+
+    def lineargroup(self, groups):
+        """Map each tag with an item of list `groups`.
+
+        The least used tag is mapped with the first item, the most used tag is mapped with the last item.
+        Mapping is done using a linear function.
+        """
+        return groups[int(round(self.linear(0, len(groups) - 1)))]
+
+    def log(self, lower, upper):
+        """Map each tag with a number between `lower` and `upper`.
+
+        The least used tag is mapped `lower`, the most used tag is mapped `upper`.
+        Mapping is done using a linear function over the logarithm of tag counts.
+
+        Theorem: The base of the logarithm used in this function is irrelevant.
+
+        Proof (idea of):
+            Let t0 and t1 be the tag counts of the least and most used tag,
+            a and b the `lower` and `upper` arguments of this function, and l
+            the base of the logarithm used in this function. Let t be the tag
+            count of an arbitrary tag.
+            To what number is t mapped?
+
+            Let f be the linear function such that f(log(t0)/log(l))=a and
+            f(log(t1)/log(l))=b.
+
+            The expression of this function is:
+            f(x) = ((b-a)×log(l)×x+a×log(t0)-b×log(t1))/(log(t1)-log(t0)).
+
+            Thus, the arbitrary tag t is mapped to f(log(t)/log(l)), and
+            the `log(l)` is crossed out and `l` disappears: the number `l`
+            is irrelevant.
+        """
+        if self.mincount == self.maxcount:
+            return lower
+        return lower + (upper - lower) * log(self.count / self.mincount) / log(
+            self.maxcount / self.mincount
+        )
+
+    def loggroup(self, groups):
+        """Map each tag with an item of list `groups`.
+
+        The least used tag is mapped with the first item, the most used tag is mapped with the last item.
+        Mapping is done using a linear function over the logarithm of tag counts.
+        """
+        return groups[int(round(self.log(0, len(groups) - 1)))]
+
+
 class TagsPlugin(Plugin):
     name = u"Tags"
     description = u"Lektor plugin to add tags."
@@ -74,6 +158,7 @@ class TagsPlugin(Plugin):
     def on_setup_env(self, **extra):
         pkg_dir = pkg_resources.resource_filename("lektor_tags", "templates")
         self.env.jinja_env.loader.searchpath.append(pkg_dir)
+        self.env.jinja_env.globals["tagweights"] = self.tagweights
         self.env.add_build_program(TagPage, TagPageBuildProgram)
 
         @self.env.urlresolver
@@ -150,3 +235,32 @@ class TagsPlugin(Plugin):
 
     def ignore_missing(self):
         return bool_from_string(self.get_config().get("ignore_missing"), False)
+
+    def tagcount(self):
+        """Map each tag to the number of pages tagged with it."""
+        # Count tags, to be aggregated as "tag weights". Note that tags that
+        # only appear in non-discoverable pages are ignored.
+        tagcount = collections.Counter()
+        for page in get_ctx().pad.query(self.get_parent_path()):
+            with contextlib.suppress(KeyError, TypeError):
+                tagcount.update(page[self.get_tag_field_name()])
+        return tagcount
+
+    def tagweights(self):
+        """Return the dictionary of tag weights.
+
+        That is:
+            - keys are tags (strings);
+            - weights are TagWeight objects.
+
+        This function is to be called AFTER the build have started
+        (so that ``get_ctx()`` returns something).
+        """
+        tagcount = self.tagcount()
+        if sum(tagcount.values()) == 0:
+            return {}
+
+        return {
+            tag: TagWeight(count, min(tagcount.values()), max(tagcount.values()))
+            for tag, count in tagcount.items()
+        }
