@@ -154,6 +154,7 @@ class TagsPlugin(Plugin):
     def on_setup_env(self, **extra):
         pkg_dir = pkg_resources.resource_filename("lektor_tags", "templates")
         self.env.jinja_env.loader.searchpath.append(pkg_dir)
+        self.env.jinja_env.globals["tagweights"] = self.tagweights
         self.env.add_build_program(TagPage, TagPageBuildProgram)
 
         @self.env.urlresolver
@@ -189,11 +190,6 @@ class TagsPlugin(Plugin):
                 url_path = url_exp.evaluate(pad, this=page, values={"tag": tag})
                 page.set_url_path(url_path)
                 yield page
-
-    def on_before_build_all(self, *args, **kwargs):
-        # Reset the `tagweights` dictionary in the jinja environment.
-        # Needed to invalidate the tag cache before each build.
-        self.env.jinja_env.globals["tagweights"] = self.tagweights
 
     def has_config(self):
         return not self.get_config().is_new
