@@ -258,15 +258,10 @@ class TagsPlugin(Plugin):
         (so that ``get_ctx()`` returns something).
         """
         tagcount = self.tagcount()
-
-        most_common = tagcount.most_common()
-        if most_common:
-            # Return last and first counts (i.e. smaller and bigger number).
-            mincount, maxcount = most_common[-1][1], most_common[0][1]
-        else:
-            # There isn't a single tag
-            mincount = maxcount = 0
+        if sum(tagcount.values()) == 0:
+            return {}
 
         return {
-            tag: TagWeight(count, mincount, maxcount) for tag, count in tagcount.items()
+            tag: TagWeight(count, min(tagcount.values()), max(tagcount.values()))
+            for tag, count in tagcount.items()
         }
