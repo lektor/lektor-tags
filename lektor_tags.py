@@ -70,6 +70,7 @@ class TagPageBuildProgram(BuildProgram):
         artifact.render_template_into(self.source.template_name, this=self.source)
 
 
+@total_ordering
 @dataclass
 class TagWeight:
 
@@ -80,10 +81,12 @@ class TagWeight:
     def __lt__(self, other):
         if isinstance(other, self.__class__):
             return self.count < other.count
-        raise NotImplementedError
+        return NotImplemented
 
     def __eq__(self, other):
-        return self.count == other.count
+        if isinstance(other, self.__class__):
+            return self.count == other.count
+        return NotImplemented
 
     def linear(self, lower, upper):
         """Map tag with a number between `lower` and `upper`.
