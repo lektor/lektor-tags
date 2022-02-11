@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 (2022-02-11)
+
+Added a `tagweights` jinja global that provides reference counts of
+tags and other bits useful for constructing tag clouds or similar types
+of tag lists.  ([#19][] — Thank you Louis Paternault!)
+
+[#19]: https://github.com/lektor/lektor-tags/pull/19
+
 ## 0.4.1 (2022-01-09)
 
 Switch to setup.cfg and a PEP517-build.
