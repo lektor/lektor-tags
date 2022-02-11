@@ -86,10 +86,11 @@ def test_TagWeight_log(tagweight, lower, upper, expected):
 @pytest.mark.parametrize(
     "count, mincount, maxcount, groups, expected",
     [
-        (4, 4, 8, ('a', 'b'), 'a'),
-        (5, 4, 8, ('a', 'b'), 'a'),
-        (6, 4, 8, ('a', 'b'), 'b'),
-        (8, 4, 8, ('a', 'b'), 'b'),
+        (1, 1, 100, ('a', 'b', 'c'), 'a'),
+        (3, 1, 100, ('a', 'b', 'c'), 'a'),
+        (12, 1, 100, ('a', 'b', 'c'), 'b'),
+        (90, 1, 100, ('a', 'b', 'c'), 'c'),
+        (100, 1, 100, ('a', 'b', 'c'), 'c'),
     ]
 )
 def test_TagWeight_loggroup(tagweight, groups, expected):
