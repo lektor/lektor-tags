@@ -92,9 +92,9 @@ class TagWeight:
         """
         if self.mincount == self.maxcount:
             return lower
-        return (
-            (upper - lower) * self.count + lower * self.maxcount - upper * self.mincount
-        ) / (self.maxcount - self.mincount)
+        return lower + (upper - lower) * (self.count - self.mincount) / (
+            self.maxcount - self.mincount
+        )
 
     def lineargroup(self, groups):
         """Map each tag with an item of list `groups`.
@@ -131,11 +131,9 @@ class TagWeight:
         """
         if self.mincount == self.maxcount:
             return lower
-        return (
-            (upper - lower) * log(self.count)
-            + lower * log(self.maxcount)
-            - upper * log(self.mincount)
-        ) / (log(self.maxcount) - log(self.mincount))
+        return lower + (upper - lower) * log(self.count / self.mincount) / log(
+            self.maxcount / self.mincount
+        )
 
     def loggroup(self, groups):
         """Map each tag with an item of list `groups`.
