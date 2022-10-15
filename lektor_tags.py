@@ -243,7 +243,8 @@ class TagsPlugin(Plugin):
         tagcount = collections.Counter()
         for page in get_ctx().pad.query(self.get_parent_path()):
             with contextlib.suppress(KeyError, TypeError):
-                tagcount.update(page[self.get_tag_field_name()])
+                page_tags = set(page[self.get_tag_field_name()])
+                tagcount.update(page_tags)
         return tagcount
 
     def tagweights(self):
