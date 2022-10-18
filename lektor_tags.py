@@ -149,8 +149,8 @@ class TagWeight:
 
 
 class TagsPlugin(Plugin):
-    name = u"Tags"
-    description = u"Lektor plugin to add tags."
+    name = "Tags"
+    description = "Lektor plugin to add tags."
     generated = False
     url_map = {}
     reverse_url_map = {}
