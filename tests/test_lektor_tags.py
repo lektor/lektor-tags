@@ -1,15 +1,20 @@
 import os
 
 import flask
+import pytest
 from lektor.context import Context
 
 app = flask.Flask(__name__)
 
 
-def test_builder(pad, builder):
+@pytest.fixture
+def build_all(builder):
     failures = builder.build_all()
-    assert not failures
+    assert failures == 0
 
+
+@pytest.mark.usefixtures("build_all")
+def test_builder(pad, builder):
     def get_page(tag):
         path = os.path.join(builder.destination_path, "blog/tag/%s/index.html" % tag)
 
@@ -20,26 +25,17 @@ def test_builder(pad, builder):
     assert get_page("tag3") == "tag: tag3, items: post2"
 
 
-def test_resolver(pad, builder, webui):
-    failures = builder.build_all()
-    assert not failures
+@pytest.mark.parametrize("tag", ["tag1", "tag3"])
+@pytest.mark.usefixtures("build_all")
+def test_resolve_url(tag, pad):
+    tag_page = pad.resolve_url_path(f"blog/tag/{tag}")
+    assert tag_page.tag == tag
+    assert tag_page.url_path == f"/blog/tag/{tag}/"
 
-    info = webui.lektor_info
 
-    def resolve(to_resolve):
-        with app.test_request_context(to_resolve):
-            return info.resolve_artifact(to_resolve, pad=pad)
-
-    def check_tag(tag):
-        artifact = "blog/tag/%s/index.html" % tag
-        artifact_path = os.path.join(info.output_path, artifact)
-        url_path = "blog/tag/%s/" % tag
-        assert resolve(url_path) == (artifact, artifact_path)
-
-    check_tag("tag1")
-    check_tag("tag2")
-    check_tag("tag3")
-    assert resolve("blog/tag/tag4/")[0] is None
+@pytest.mark.usefixtures("build_all")
+def test_resolve_url_failure(pad):
+    assert pad.resolve_url_path("blog/tag/tag4") is None
 
 
 def test_virtual_resolver(pad, builder):

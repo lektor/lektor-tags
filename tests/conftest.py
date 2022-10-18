@@ -52,20 +52,3 @@ def F():
     from lektor.db import F
 
     return F
-
-
-@pytest.fixture(scope="function")
-def webui(request, env):
-    from lektor.admin.webui import WebUI
-
-    output_path = tempfile.mkdtemp()
-
-    def cleanup():
-        try:
-            shutil.rmtree(output_path)
-        except (OSError, IOError):
-            pass
-
-    request.addfinalizer(cleanup)
-
-    return WebUI(env, output_path=output_path)
