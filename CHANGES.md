@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.1 (2022-10-19)
+
+### Bugs Fixed
+
+- Ignore duplicate tags (on a single page) when counting. ([#25][])
+- When applicable, limit tags to those specified in the
+  [`tags`][config-tags] config setting ([#25][])
+
+[#25]: https://github.com/lektor/lektor-tags/pull/25
+[config-tags]: https://github.com/lektor/lektor-tags#tags
+
 ## 0.5.0 (2022-02-11)
 
 Added a `tagweights` jinja global that provides reference counts of
