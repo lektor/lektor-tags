@@ -241,9 +241,12 @@ class TagsPlugin(Plugin):
         # Count tags, to be aggregated as "tag weights". Note that tags that
         # only appear in non-discoverable pages are ignored.
         tagcount = collections.Counter()
-        for page in get_ctx().pad.query(self.get_parent_path()):
+        pad = get_ctx().pad
+        all_tags = self.get_all_tags(pad.get(self.get_parent_path()))
+        for page in pad.query(self.get_parent_path()):
             with contextlib.suppress(KeyError, TypeError):
-                tagcount.update(page[self.get_tag_field_name()])
+                page_tags = set(page[self.get_tag_field_name()])
+                tagcount.update(page_tags.intersection(all_tags))
         return tagcount
 
     def tagweights(self):

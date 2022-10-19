@@ -23,6 +23,13 @@ def test_tagcount(tags_plugin):
 
 
 @pytest.mark.usefixtures("lektor_context")
+def test_tagcount_limit_tags(tags_plugin):
+    config = tags_plugin.get_config()
+    config["tags"] = "['tag1', 'tag2']"
+    assert tags_plugin.tagcount() == Counter({"tag1": 2, "tag2": 1})
+
+
+@pytest.mark.usefixtures("lektor_context")
 def test_tagweights(tags_plugin):
     assert tags_plugin.tagweights() == {
         "tag1": TagWeight(2, 1, 2),
