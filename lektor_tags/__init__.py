@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import collections
 import contextlib
 import posixpath
+import sys
 from dataclasses import dataclass
+from functools import partial
 from functools import total_ordering
 from math import log
+from pathlib import Path
+from weakref import finalize
 
-import pkg_resources
 from lektor.build_programs import BuildProgram
 from lektor.context import get_ctx
 from lektor.environment import Expression
@@ -15,6 +20,17 @@ from lektor.pluginsystem import Plugin
 from lektor.sourceobj import VirtualSourceObject
 from lektor.utils import bool_from_string
 from lektor.utils import build_url
+
+if sys.version_info >= (3, 12):
+    from importlib import resources
+else:
+    import importlib_resources as resources
+
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from werkzeug.utils import cached_property
+
 
 DEFAULT_ITEMS_QUERY = "this.parent.children.filter(F.tags.contains(tag))"
 DEFAULT_URL_PATH_EXP = "{{ this.parent.url_path }}tag/{{ tag }}"
@@ -156,8 +172,7 @@ class TagsPlugin(Plugin):
     reverse_url_map = {}
 
     def on_setup_env(self, **extra):
-        pkg_dir = pkg_resources.resource_filename("lektor_tags", "templates")
-        self.env.jinja_env.loader.searchpath.append(pkg_dir)
+        self.env.jinja_env.loader.searchpath.append(self._templates_path)
         self.env.jinja_env.globals["tagweights"] = self.tagweights
         self.env.add_build_program(TagPage, TagPageBuildProgram)
 
@@ -267,3 +282,11 @@ class TagsPlugin(Plugin):
             tag: TagWeight(count, min(tagcount.values()), max(tagcount.values()))
             for tag, count in tagcount.items()
         }
+
+    @cached_property
+    def _templates_path(self) -> Path:
+        """Get path to our packages template directory."""
+        pkgdata = resources.files()
+        cm = resources.as_file(pkgdata / "templates")
+        finalize(self, partial(cm.__exit__, None, None, None))
+        return cm.__enter__()
