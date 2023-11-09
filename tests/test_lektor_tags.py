@@ -56,3 +56,7 @@ def test_tags_expression(pad, builder, env):
 
         conf["tags"] = '["foo", "bar", "bar"]'
         assert plugin.get_all_tags(parent) == {"bar", "foo"}
+
+
+def test_default_template(env):
+    env.jinja_env.get_template("lektor_tags_default_template.html")
