@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2 (2023-11-11)
+
+### Bugs Fixed
+
+- Convert module to package, enabling us to ship the default template
+  as package data. ([#26][])
+
+[#26]: https://github.com/lektor/lektor-tags/pull/26
+
 ## 0.5.1 (2022-10-19)
 
 ### Bugs Fixed
@@ -15,7 +24,7 @@
 
 Added a `tagweights` jinja global that provides reference counts of
 tags and other bits useful for constructing tag clouds or similar types
-of tag lists.  ([#19][] — Thank you Louis Paternault!)
+of tag lists. ([#19][] — Thank you Louis Paternault!)
 
 [#19]: https://github.com/lektor/lektor-tags/pull/19
 
